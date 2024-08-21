@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Prestaciones</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Calculadora de Prestaciones</h1>
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="salario_diario" class="form-label">Salario Diario:</label>
+                        <input type="number" id="salario_diario" name="salario_diario" class="form-control" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fecha_ingreso" class="form-label">Fecha de Ingreso (YYYY-MM-DD):</label>
+                        <input type="date" id="fecha_ingreso" name="fecha_ingreso" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fecha_salida" class="form-label">Fecha de Salida (YYYY-MM-DD):</label>
+                        <input type="date" id="fecha_salida" name="fecha_salida" class="form-control" required>
+                    </div>
+                    <div class="text-center">
+                        <input type="submit" value="Calcular" class="btn btn-primary">
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if resultado %}
+        <div class="card mt-4">
+            <div class="card-body">
+                <h2 class="card-title">Desglose de Prestaciones</h2>
+                <p><strong>Años de servicio:</strong> {{ años_completos }} años y {{ dias_proporcionales }} días</p>
+                <p><strong>Prima de Antigüedad:</strong> {{ prima_antiguedad }} (Cálculo: {{ calc_antiguedad }})</p>
+                <p><strong>Indemnización:</strong> {{ indemnizacion }} (Cálculo: {{ calc_indemnizacion }})</p>
+                <p><strong>Aguinaldo Proporcional:</strong> {{ aguinaldo_proporcional }} (Cálculo: {{ calc_aguinaldo }})</p>
+                <p><strong>Días de Vacaciones:</strong> {{ dias_vacaciones }} días (Cálculo: {{ calc_vacaciones }})</p>
+                <p><strong>Prima Vacacional:</strong> {{ prima_vacacional }} (Cálculo: {{ calc_prima_vacacional }})</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Bootstrap JS (optional, for dynamic components) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
