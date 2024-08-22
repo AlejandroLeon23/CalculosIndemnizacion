@@ -45,33 +45,41 @@ def calcular_dias_vacaciones(años_servicio):
     años_completos = int(años_servicio)
     dias_vacaciones = 0
 
+    # Determinar los días de vacaciones según el año en curso (año + 1)
     if años_completos == 0:
-        # Proporcional si la antigüedad es menor de 1 año, basado en 12 días para el primer año
-        dias_vacaciones = round(12 * años_servicio, 2)
-    elif años_completos == 1:
         dias_vacaciones = 12
-    elif años_completos == 2:
+    elif años_completos == 1:
         dias_vacaciones = 14
-    elif años_completos == 3:
+    elif años_completos == 2:
         dias_vacaciones = 16
-    elif años_completos == 4:
+    elif años_completos == 3:
         dias_vacaciones = 18
-    elif años_completos >= 5 and años_completos < 10:
+    elif años_completos == 4:
         dias_vacaciones = 20
-    elif años_completos >= 10 and años_completos < 15:
+    elif años_completos >= 5 and años_completos < 10:
         dias_vacaciones = 22
-    elif años_completos >= 15 and años_completos < 20:
+    elif años_completos >= 10 and años_completos < 15:
         dias_vacaciones = 24
+    elif años_completos >= 15 and años_completos < 20:
+        dias_vacaciones = 26
     elif años_completos >= 20:
         # 26 días base y 2 días adicionales por cada 5 años después de los 20 años
-        dias_vacaciones = 26 + ((años_completos - 20) // 5) * 2
+        dias_vacaciones = 28 + ((años_completos - 20) // 5) * 2
     
-    # No sumar fracción de años, solo se toma en cuenta el año en curso
-    if años_completos < 1:
-        dias_vacaciones = round(12 * (años_servicio - años_completos), 2)
-    
-    calculo = f"{años_servicio:.2f} años -> {dias_vacaciones:.2f} días de vacaciones"
-    return round(dias_vacaciones, 2), calculo
+    # Calcular proporcionalmente los días de vacaciones en función del año en curso
+    fraccion_año = años_servicio - años_completos
+    dias_vacaciones_proporcionales = round(dias_vacaciones * fraccion_año, 2)
+
+    # Elaboración detallada del cálculo
+    calculo = (
+        f"{años_servicio:.2f} años de servicio:\n"
+        f"- Años completos: {años_completos} años -> Días de vacaciones según año en curso: {dias_vacaciones} días\n"
+        f"- Fracción del año actual: {fraccion_año:.2f} años del {años_completos + 1}° año -> {dias_vacaciones_proporcionales:.2f} días de vacaciones proporcionales"
+    )
+    return round(dias_vacaciones_proporcionales, 2), calculo
+
+
+
 
 def calcular_monto_vacaciones(salario_diario, dias_vacaciones):
     monto_vacaciones = round(salario_diario * dias_vacaciones, 2)
