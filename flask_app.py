@@ -46,6 +46,7 @@ def calcular_dias_vacaciones(años_servicio):
     dias_vacaciones = 0
 
     if años_completos == 0:
+        # Proporcional si la antigüedad es menor de 1 año, basado en 12 días para el primer año
         dias_vacaciones = round(12 * años_servicio, 2)
     elif años_completos == 1:
         dias_vacaciones = 12
@@ -62,10 +63,12 @@ def calcular_dias_vacaciones(años_servicio):
     elif años_completos >= 15 and años_completos < 20:
         dias_vacaciones = 24
     elif años_completos >= 20:
+        # 26 días base y 2 días adicionales por cada 5 años después de los 20 años
         dias_vacaciones = 26 + ((años_completos - 20) // 5) * 2
     
-    if años_completos >= 1:
-        dias_vacaciones += (años_servicio - años_completos) * (dias_vacaciones / años_completos)
+    # No sumar fracción de años, solo se toma en cuenta el año en curso
+    if años_completos < 1:
+        dias_vacaciones = round(12 * (años_servicio - años_completos), 2)
     
     calculo = f"{años_servicio:.2f} años -> {dias_vacaciones:.2f} días de vacaciones"
     return round(dias_vacaciones, 2), calculo
