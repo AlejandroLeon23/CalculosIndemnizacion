@@ -36,12 +36,32 @@
         <div class="card mt-4">
             <div class="card-body">
                 <h2 class="card-title">Desglose de Prestaciones</h2>
+                
+                {% if nota_antiguedad %}
+                    <p class="text-warning">{{ nota_antiguedad }}</p>
+                {% endif %}
+                
                 <p><strong>Años de servicio:</strong> {{ años_completos }} años y {{ dias_proporcionales }} días</p>
+                
+                <p><strong>Indemnización</strong></p>
+
+                <p><strong>Indemnización (90 días):</strong> {{ indemnizacion_90_dias }} (Cálculo: {{ calc_indemnizacion_90 }})</p>
+                <p><strong>Indemnización (45 días para Conciliación):</strong> {{ indemnizacion_45_dias }} (Cálculo: {{ calc_indemnizacion_45 }})</p>
+                
+                <p><strong>Prestaciones Laborales</strong></p>
+                
                 <p><strong>Prima de Antigüedad:</strong> {{ prima_antiguedad }} (Cálculo: {{ calc_antiguedad }})</p>
-                <p><strong>Indemnización:</strong> {{ indemnizacion }} (Cálculo: {{ calc_indemnizacion }})</p>
+                
+                
                 <p><strong>Aguinaldo Proporcional:</strong> {{ aguinaldo_proporcional }} (Cálculo: {{ calc_aguinaldo }})</p>
+                
                 <p><strong>Días de Vacaciones:</strong> {{ dias_vacaciones }} días (Cálculo: {{ calc_vacaciones }})</p>
+                <p><strong>Monto Total de Vacaciones:</strong> {{ monto_vacaciones }} (Cálculo: {{ calc_monto_vacaciones }})</p>
                 <p><strong>Prima Vacacional:</strong> {{ prima_vacacional }} (Cálculo: {{ calc_prima_vacacional }})</p>
+                
+                <h3>Total</h3>
+                <p><strong>Suma Total (Indemnización 90 días):</strong> {{ suma_total }}</p>
+                <p><strong>Suma Total (Indemnización 45 días - Conciliación):</strong> {{ suma_conciliacion }}</p>
             </div>
         </div>
         {% endif %}

@@ -4,16 +4,28 @@ from datetime import datetime
 app = Flask(__name__)
 
 def calcular_prima_antiguedad(salario_diario, años_servicio):
+    salario_maximo = 749.78
+    nota = ""
+
+    if salario_diario > salario_maximo:
+        salario_diario = salario_maximo
+        nota = f"Nota: El salario diario se limitó a ${salario_maximo} MXN para el cálculo de la prima de antigüedad."
+
     prima_antiguedad = round(años_servicio * 12 * salario_diario, 2)
     calculo = f"{años_servicio:.2f} años * 12 días * {salario_diario} salario diario"
-    return prima_antiguedad, calculo
+    
+    return prima_antiguedad, calculo, nota
 
-def calcular_indemnizacion_por_dia(salario_diario):
-    dias_por_mes = 30
-    total_dias = dias_por_mes * 3
-    indemnizacion = round(salario_diario * total_dias, 2)
-    calculo = f"{salario_diario} salario diario * {total_dias} días (3 meses)"
-    return indemnizacion, calculo
+def calcular_indemnizacion(salario_diario):
+    # Indemnización de 90 días (3 meses)
+    indemnizacion_90_dias = round(salario_diario * 90, 2)
+    calculo_90 = f"{salario_diario} salario diario * 90 días"
+    
+    # Indemnización de 45 días (para conciliación)
+    indemnizacion_45_dias = round(salario_diario * 45, 2)
+    calculo_45 = f"{salario_diario} salario diario * 45 días"
+    
+    return indemnizacion_90_dias, calculo_90, indemnizacion_45_dias, calculo_45
 
 def calcular_aguinaldo_proporcional(salario_diario, fecha_ingreso, fecha_salida, dias_aguinaldo=15):
     fecha_ingreso = datetime.strptime(fecha_ingreso, '%Y-%m-%d')
@@ -34,7 +46,7 @@ def calcular_dias_vacaciones(años_servicio):
     dias_vacaciones = 0
 
     if años_completos == 0:
-        dias_vacaciones = round(12 * años_servicio, 2)  # Proporcional si menos de 1 año
+        dias_vacaciones = round(12 * años_servicio, 2)
     elif años_completos == 1:
         dias_vacaciones = 12
     elif años_completos == 2:
@@ -56,12 +68,16 @@ def calcular_dias_vacaciones(años_servicio):
         dias_vacaciones += (años_servicio - años_completos) * (dias_vacaciones / años_completos)
     
     calculo = f"{años_servicio:.2f} años -> {dias_vacaciones:.2f} días de vacaciones"
-    return round(min(dias_vacaciones, 30), 2), calculo
+    return round(dias_vacaciones, 2), calculo
 
-def calcular_prima_vacacional(salario_diario, dias_vacaciones, porcentaje_prima=0.25):
-    salario_vacacional = salario_diario * dias_vacaciones
-    prima_vacacional = round(salario_vacacional * porcentaje_prima, 2)
-    calculo = f"{dias_vacaciones:.2f} días * {salario_diario} salario diario * {porcentaje_prima * 100}%"
+def calcular_monto_vacaciones(salario_diario, dias_vacaciones):
+    monto_vacaciones = round(salario_diario * dias_vacaciones, 2)
+    calculo = f"{dias_vacaciones:.2f} días * {salario_diario} salario diario"
+    return monto_vacaciones, calculo
+
+def calcular_prima_vacacional(monto_vacaciones, porcentaje_prima=0.25):
+    prima_vacacional = round(monto_vacaciones * porcentaje_prima, 2)
+    calculo = f"{monto_vacaciones:.2f} monto de vacaciones * {porcentaje_prima * 100}%"
     return prima_vacacional, calculo
 
 def calcular_anos_servicio(fecha_ingreso, fecha_salida):
@@ -79,6 +95,11 @@ def desglose_anos_dias(años_servicio):
 def formatear_moneda(valor):
     return f"${valor:,.2f} MXN"
 
+def calcular_suma_total(prima_antiguedad, monto_vacaciones, prima_vacacional, indemnizacion):
+    # Incluir la Prima de Antigüedad en la suma total
+    return prima_antiguedad + monto_vacaciones + prima_vacacional + indemnizacion
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
@@ -89,20 +110,31 @@ def index():
         años_servicio = calcular_anos_servicio(fecha_ingreso, fecha_salida)
         años_completos, dias_proporcionales = desglose_anos_dias(años_servicio)
 
-        prima_antiguedad, calc_antiguedad = calcular_prima_antiguedad(salario_diario, años_servicio)
-        indemnizacion, calc_indemnizacion = calcular_indemnizacion_por_dia(salario_diario)
+        prima_antiguedad, calc_antiguedad, nota_antiguedad = calcular_prima_antiguedad(salario_diario, años_servicio)
+        indemnizacion_90_dias, calc_indemnizacion_90, indemnizacion_45_dias, calc_indemnizacion_45 = calcular_indemnizacion(salario_diario)
         aguinaldo_proporcional, calc_aguinaldo = calcular_aguinaldo_proporcional(salario_diario, fecha_ingreso, fecha_salida)
         dias_vacaciones, calc_vacaciones = calcular_dias_vacaciones(años_servicio)
-        prima_vacacional, calc_prima_vacacional = calcular_prima_vacacional(salario_diario, dias_vacaciones)
+        
+        monto_vacaciones, calc_monto_vacaciones = calcular_monto_vacaciones(salario_diario, dias_vacaciones)
+        prima_vacacional, calc_prima_vacacional = calcular_prima_vacacional(monto_vacaciones)
+
+        # Cálculo de la suma total de indemnización completa y conciliación, incluyendo Prima de Antigüedad
+        suma_total = calcular_suma_total(prima_antiguedad, monto_vacaciones, prima_vacacional, indemnizacion_90_dias)
+        suma_conciliacion = calcular_suma_total(prima_antiguedad, monto_vacaciones, prima_vacacional, indemnizacion_45_dias)
 
         return render_template('index.html', resultado=True,
                                años_completos=años_completos, dias_proporcionales=dias_proporcionales,
                                prima_antiguedad=formatear_moneda(prima_antiguedad), calc_antiguedad=calc_antiguedad,
-                               indemnizacion=formatear_moneda(indemnizacion), calc_indemnizacion=calc_indemnizacion,
+                               nota_antiguedad=nota_antiguedad,
+                               indemnizacion_90_dias=formatear_moneda(indemnizacion_90_dias), calc_indemnizacion_90=calc_indemnizacion_90,
+                               indemnizacion_45_dias=formatear_moneda(indemnizacion_45_dias), calc_indemnizacion_45=calc_indemnizacion_45,
                                aguinaldo_proporcional=formatear_moneda(aguinaldo_proporcional), calc_aguinaldo=calc_aguinaldo,
                                dias_vacaciones=dias_vacaciones, calc_vacaciones=calc_vacaciones,
-                               prima_vacacional=formatear_moneda(prima_vacacional), calc_prima_vacacional=calc_prima_vacacional)
+                               monto_vacaciones=formatear_moneda(monto_vacaciones), calc_monto_vacaciones=calc_monto_vacaciones,
+                               prima_vacacional=formatear_moneda(prima_vacacional), calc_prima_vacacional=calc_prima_vacacional,
+                               suma_total=formatear_moneda(suma_total), suma_conciliacion=formatear_moneda(suma_conciliacion))
     return render_template('index.html', resultado=False)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
