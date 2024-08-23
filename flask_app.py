@@ -1,5 +1,9 @@
-from flask import Flask, render_template, request
 from datetime import datetime
+from flask import Flask, render_template, request, send_file  # Asegúrate de incluir send_file aquí
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+
+
 
 app = Flask(__name__)
 
@@ -110,6 +114,46 @@ def calcular_suma_total(prima_antiguedad, monto_vacaciones, prima_vacacional, in
     # Incluir la Prima de Antigüedad en la suma total
     return prima_antiguedad + monto_vacaciones + prima_vacacional + indemnizacion
 
+def generar_pdf(nombre_archivo, datos):
+    c = canvas.Canvas(nombre_archivo, pagesize=letter)
+    c.setFont("Helvetica", 12)
+    
+    # Título
+    c.drawString(100, 750, "Desglose de Prestaciones")
+    
+    # Nota de advertencia (si aplica)
+    if 'nota_antiguedad' in datos:
+        c.setFont("Helvetica-Bold", 10)
+        c.setFillColorRGB(1, 0, 0)  # Color rojo
+        c.drawString(100, 730, datos['nota_antiguedad'])
+        c.setFillColorRGB(0, 0, 0)  # Volver al color negro
+    
+    c.setFont("Helvetica", 12)
+    
+    # Detalles
+    y = 710
+    detalles = [
+        f"Años de servicio: {datos['años_completos']} años y {datos['dias_proporcionales']} días",
+        f"Prima de Antigüedad: {datos['prima_antiguedad']} (Cálculo: {datos['calc_antiguedad']})",
+        f"Indemnización (90 días): {datos['indemnizacion_90_dias']} (Cálculo: {datos['calc_indemnizacion_90']})",
+        f"Indemnización (45 días para Conciliación): {datos['indemnizacion_45_dias']} (Cálculo: {datos['calc_indemnizacion_45']})",
+        f"Aguinaldo Proporcional: {datos['aguinaldo_proporcional']} (Cálculo: {datos['calc_aguinaldo']})",
+        f"Días de Vacaciones: {datos['dias_vacaciones']} días (Cálculo: {datos['calc_vacaciones']})",
+        f"Monto Total de Vacaciones: {datos['monto_vacaciones']} (Cálculo: {datos['calc_monto_vacaciones']})",
+        f"Prima Vacacional: {datos['prima_vacacional']} (Cálculo: {datos['calc_prima_vacacional']})",
+    ]
+    
+    for detalle in detalles:
+        c.drawString(100, y, detalle)
+        y -= 20
+
+    # Suma Total
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(100, y - 10, f"Suma Total (Indemnización 90 días): {datos['suma_total']}")
+    c.drawString(100, y - 30, f"Suma Total (Indemnización 45 días - Conciliación): {datos['suma_conciliacion']}")
+    
+    c.save()
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -129,23 +173,45 @@ def index():
         monto_vacaciones, calc_monto_vacaciones = calcular_monto_vacaciones(salario_diario, dias_vacaciones)
         prima_vacacional, calc_prima_vacacional = calcular_prima_vacacional(monto_vacaciones)
 
-        # Cálculo de la suma total de indemnización completa y conciliación, incluyendo Prima de Antigüedad
         suma_total = calcular_suma_total(prima_antiguedad, monto_vacaciones, prima_vacacional, indemnizacion_90_dias)
         suma_conciliacion = calcular_suma_total(prima_antiguedad, monto_vacaciones, prima_vacacional, indemnizacion_45_dias)
 
+        datos = {
+            'años_completos': años_completos,
+            'dias_proporcionales': dias_proporcionales,
+            'prima_antiguedad': formatear_moneda(prima_antiguedad),
+            'calc_antiguedad': calc_antiguedad,
+            'indemnizacion_90_dias': formatear_moneda(indemnizacion_90_dias),
+            'calc_indemnizacion_90': calc_indemnizacion_90,
+            'indemnizacion_45_dias': formatear_moneda(indemnizacion_45_dias),
+            'calc_indemnizacion_45': calc_indemnizacion_45,
+            'aguinaldo_proporcional': formatear_moneda(aguinaldo_proporcional),
+            'calc_aguinaldo': calc_aguinaldo,
+            'dias_vacaciones': dias_vacaciones,
+            'calc_vacaciones': calc_vacaciones,
+            'monto_vacaciones': formatear_moneda(monto_vacaciones),
+            'calc_monto_vacaciones': calc_monto_vacaciones,
+            'prima_vacacional': formatear_moneda(prima_vacacional),
+            'calc_prima_vacacional': calc_prima_vacacional,
+            'suma_total': formatear_moneda(suma_total),
+            'suma_conciliacion': formatear_moneda(suma_conciliacion),
+            'nota_antiguedad': nota_antiguedad if nota_antiguedad else ""
+        }
+
+        # Generar el PDF y guardar en el servidor
+        nombre_pdf = "prestaciones.pdf"
+        generar_pdf(nombre_pdf, datos)
+
+        # Renderizar la página HTML con la opción de descargar el PDF
         return render_template('index.html', resultado=True,
-                               años_completos=años_completos, dias_proporcionales=dias_proporcionales,
-                               prima_antiguedad=formatear_moneda(prima_antiguedad), calc_antiguedad=calc_antiguedad,
-                               nota_antiguedad=nota_antiguedad,
-                               indemnizacion_90_dias=formatear_moneda(indemnizacion_90_dias), calc_indemnizacion_90=calc_indemnizacion_90,
-                               indemnizacion_45_dias=formatear_moneda(indemnizacion_45_dias), calc_indemnizacion_45=calc_indemnizacion_45,
-                               aguinaldo_proporcional=formatear_moneda(aguinaldo_proporcional), calc_aguinaldo=calc_aguinaldo,
-                               dias_vacaciones=dias_vacaciones, calc_vacaciones=calc_vacaciones,
-                               monto_vacaciones=formatear_moneda(monto_vacaciones), calc_monto_vacaciones=calc_monto_vacaciones,
-                               prima_vacacional=formatear_moneda(prima_vacacional), calc_prima_vacacional=calc_prima_vacacional,
-                               suma_total=formatear_moneda(suma_total), suma_conciliacion=formatear_moneda(suma_conciliacion))
+                               nombre_pdf=nombre_pdf,
+                               **datos)
     return render_template('index.html', resultado=False)
 
+
+@app.route('/descargar/<filename>')
+def descargar_pdf(filename):
+    return send_file(filename, as_attachment=True)
 
 if __name__ == '__main__':
     app.run(debug=True)

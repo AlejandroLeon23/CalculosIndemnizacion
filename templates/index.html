@@ -62,6 +62,7 @@
                 <h3>Total</h3>
                 <p><strong>Suma Total (Indemnización 90 días):</strong> {{ suma_total }}</p>
                 <p><strong>Suma Total (Indemnización 45 días - Conciliación):</strong> {{ suma_conciliacion }}</p>
+                <a href="{{ url_for('descargar_pdf', filename=nombre_pdf) }}" class="btn btn-primary mt-3">Descargar PDF</a>
             </div>
         </div>
         {% endif %}
